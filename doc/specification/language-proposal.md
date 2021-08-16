@@ -689,7 +689,7 @@ The magnitude of a quantity is a member of an extended real number set _R_, wher
 2. _f⁺_(⊥) = ⊥
 3. For _a_ equal to ∞, -∞, or in the complement of the domain of _f_, if lim *x*→*a* *f*(*x*) = _L_ for _L_ in ℝ or where _L_ is ∞ or -∞, then _f⁺_(_a_) = _L_ in _R_. Otherwise, _f⁺_(_a_) = ⊥.
 
-Functions of more than one variable are extended similarly. Arithmetic operations are extended as usual to ℝ ∪ {-∞, ∞}, with the value of indeterminite forms taking the value ⊥. The value of any expression involving ⊥ is ⊥.
+Functions of more than one variable are extended similarly. Arithmetic operations are extended as usual to ℝ ∪ {-∞, ∞}, with the value of indeterminate forms taking the value ⊥. The value of any expression involving ⊥ is ⊥.
 
 When interpreted or compiled into an Arbor mechanism, _R_ and operations upon it will necessarily be approximated in some manner; IEEE 754 semantics are a reasonable expectation, with NaN representing ⊥, but the interpreter or transpiler is permitted to perform algebraic simplifications including:
 
@@ -979,7 +979,7 @@ Notes:
 
 ### Built-in functions
 
-Arblang includse some predefined real functions, already bound in each module scope:
+Arblang includes some predefined real functions, already bound in each module scope:
 
 | Function           | Operation                                               |
 |--------------------|---------------------------------------------------------|
