@@ -1157,7 +1157,7 @@ def b: real = 2*sq(P);
 >
 > _regime-defn_ ::= `regime` _identifier_ `{` ( _regime-decl_ | _regime-defn_ )* `}`
 >
-> _regime-decl_ ::= _evolve-defn_ | _when-defn_ | _effect-defn_
+> _regime-decl_ ::= _evolve-defn_ | _when-defn_ | _on-defn_ | _effect-defn_
 >
 > _evolve-defn_ ::= `evolve` `explicit`? `state'` _type-assertion_? `=` _value-expression_ `;`
 >
