@@ -6,6 +6,7 @@ The Arblang language is constrained so that every evolution and effect can be in
 
 Arblang nonetheless can also be interpreted in a purely numerical fashion in other contexts.
 
+When Arblang source is interpreted or compiled, it is done so in an _environment_. The environment comprises state outside of any fragment of Arblang source, and determines on one hand how foreign module imports are resolved, or if there any default imports, and on the other how interfaces are presented and interpreted in the context of cell models.
 
 # Mechanism semantics
 <a id="mechanism-semantics"/>
@@ -153,7 +154,7 @@ A comment is introduced by `#` and then extends to the end of the line. It is th
 >
 > _cr_ ::= U+000D CARRIAGE RETURN
 >
-> _other-new-line_ ::= U+0085 NEXT LINE | U+2028 LINE SEPARATOR | U+2029 PARAGRAPH SEPARATOR
+> _other-new-line_ ::= U+000B LINE TABULATION | U+000C FORM FEED | U+0085 NEXT LINE | U+2028 LINE SEPARATOR | U+2029 PARAGRAPH SEPARATOR
 
 #### Token value
 
@@ -505,7 +506,7 @@ A _type-expr_ is either `boolean`, a quantity term, a record type description, o
 
 > _type-expr_ ::= `boolean` | _quantity-term_ | _record-type-expr_ | _qualified-identifier_
 
-An expression of a given type can be constructed from type literals and constructors described below, as well as from operators acting on subexpressions (see the section _Expressions_).
+An expression of a given type can be constructed from type literals and constructors described below, as well as from operators acting on subexpressions (see the section [Value expressions](#value-expressions)).
 
 In definitions of record fields, function arguments, and optionally within expressions a _type-assertion_ declares that the identifier or expression has a given type.
 
@@ -535,7 +536,7 @@ def c: length = 3;
 
 A quantity type or record has an associated _derivative type_:
 
-* The derivative type of a quantity type _Q_ is _Q_/ti
+* The derivative type of a quantity type _Q_ is _Q_/time.
 
 * The derivative type of a record type with fields _fᵢ_ of types _Tᵢ_ is the record type with fields _fᵢ_' and types _Uᵢ_ which are the derivative types of _Tᵢ_.
 
@@ -679,7 +680,7 @@ Arblang metric units, and their corresponding Arblang quantities:
 
 Note that the non-SI unit 'molar' is equal to 1 mol/L.
 
-As a possible extension, Arblang might support non-zero based units such as degrees Celsius °C. Doing so, however, complicates the algebra; refer to the [appendix](#extension-offset-values-and-affine-spaces).
+As a possible extension, Arblang might support non-zero based units such as degrees Celsius °C. Doing so, however, complicates the algebra; refer to the possible [Offset Units](#offset-units) extension.
 
 #### Magnitudes
 
@@ -715,7 +716,7 @@ Correspondingly, record literals have the syntax:
 
 > _record-literal_ ::= `{` _field-defn_* `}`
 >
-> _field-defn_ ::= ***symbol*** _type-assertion_? `=` _expression_ `;` | _reaction_ `;`
+> _field-defn_ ::= ***symbol*** _type-assertion_? `=` _value-expression_ `;` | _reaction_ `;`
 
 For field definitions, if there is no type assertion given, the type of the field is deduced from the expression on the right hand side.
 
@@ -741,25 +742,25 @@ with { a = 4; }; a        # a is locally bound to the value 4
 
 > _reaction_ ::= _right-reaction_ | _left-reaction_ | _right-left-reaction_
 >
-> _right-reaction_ ::= _complex_ ***right-arrow*** _complex_ `(` _expression_ `)`
+> _right-reaction_ ::= _complex_ ***right-arrow*** _complex_ `(` _value-expression_ `)`
 >
-> _left-reaction_ ::= _complex_ ***left-arrow*** _complex_ `(` _expression_ `)`
+> _left-reaction_ ::= _complex_ ***left-arrow*** _complex_ `(` _value-expression_ `)`
 >
-> _right-left-reaction_ ::= _complex_ ***right-left-arrow*** _complex_ `(` _expression_ `,` _expression_ `)`
+> _right-left-reaction_ ::= _complex_ ***right-left-arrow*** _complex_ `(` _value-expression_ `,` _value-expression_ `)`
 >
 > _complex_ ::= ***empty-set*** | ***numeric-literal***? ***symbol*** ( `+` ***numeric-literal***? ***symbol*** )*
 
-A _reaction_ clause describes a chemical reaction equation between multisets (complexes) of species. In the context of a record literal, _reaction_ clauses are translated into field definitions through a process described below. For ease of algebraic manipulation in the determination of ODE solutions and steady states, it can be useful to retain a representation of the untranslated reactions themselves together with the internal record representation.
+A _reaction_ clause describes a chemical reaction equation between multisets (complexes) of species. In the context of a record literal, _reaction_ clauses are translated into field definitions through a process described below. For ease of algebraic manipulation in the determination of ODE solutions and steady states, it can be useful to retain a representation of the untranslated reactions themselves together with the internal record representation; for a nice survey on chemical reaction networks, see [Gunawardena, J. (2003) Chemical reaction network theory for in-silico biologists](http://jeremy-gunawardena.com/papers/crnt.pdf).
 
 A _complex_ is zero (represented by ***empty-set***) or more species names each represented by a ***symbol***, possibly prefixed by a positive integer coefficient, and separated by ***plus-sign***. A ***numeric-literal*** in a _complex_ term that is not a positive integer is a syntax error. The corresponding multiset comprises these species, with the coefficient determining the multiplicity.
 
-A reaction may be a _right-reaction_, a _left-reaction_, or a _right-left-reaction_. For a _right-reaction_ or _left-reaction_, the _expression_ in parentheses is the reaction rate coefficient. A _left-reaction_ of the form `complex₁ ← complex₂ (expr)` is exactly equivalent to a _right-reaction_ of the form `complex₂ → complex₁ (expr)`. For a _right-left-reaction_, the first _expression_ in the parenthesis is the forward reaction coefficient and the second is the reverse reaction coefficient. A _right-left-reaction_ of the form `complex₁ ⇄ complex₂ (expr₁, expr₂)` is exactly equivalent to a _right-reaction_ `complex₁ → complex₂ (expr₁)` and a _left-reaction_ `complex₁ ← compex₂ (expr₂)`.
+A reaction may be a _right-reaction_, a _left-reaction_, or a _right-left-reaction_. For a _right-reaction_ or _left-reaction_, the _value-expression_ in parentheses is the reaction rate coefficient. A _left-reaction_ of the form `complex₁ ← complex₂ (expr)` is exactly equivalent to a _right-reaction_ of the form `complex₂ → complex₁ (expr)`. For a _right-left-reaction_, the first _value-expression_ in the parenthesis is the forward reaction coefficient and the second is the reverse reaction coefficient. A _right-left-reaction_ of the form `complex₁ ⇄ complex₂ (expr₁, expr₂)` is exactly equivalent to a _right-reaction_ `complex₁ → complex₂ (expr₁)` and a _left-reaction_ `complex₁ ← compex₂ (expr₂)`.
 
 #### Converting reaction clauses to field definitions
 
 In a record literal, each species _α_ present in any reaction clause complex will generate a field definition for the field named _α'_. The identifier _α_ will represent a species concentration, and _α'_ its rate of change.
 
-Consider the normalized representation of the set of reaction clauses, where each is represented by one or two right reactions of the form _Lᵢ → Rᵢ (κᵢ)_, where are _Lᵢ_ and _Rᵢ_ are complexes. Let Π*C* denote the product with multiplicity of the species terms in a complex *C*, and *μ*(*α*; *C*) the multiplicity of a species _α_ in _C_.
+Consider the normalized representation of the set of reaction clauses, where each is represented by one or two right reactions of the form _Lᵢ → Rᵢ (κᵢ)_, where are _Lᵢ_ and _Rᵢ_ are complexes. Let Π*C* denote the product with multiplicity of the species terms in a complex *C*, and *μ*(*α*; *C*) the multiplicity of a species _α_ in _C_, so that e.g. Π*C* = Πα∈*C* *α*^*μ*(*α*; *C*).
 
 The expression assigned to _α'_ in its field definition is the sum of terms _κᵢ_·Π*Lᵢ*·(*μ*(*α*; *Rᵢ*) - *μ*(*α*; *Lᵢ*)) for each reaction _i_.
 
@@ -789,23 +790,23 @@ The record literal is then algebraically equivalent to the following.
 
 A function literal gives a value of a function type. Function types have no representation in the Arblang source language, and so cannot be used in type assertions, or in function arguments. Function literals may only appear in _function-application_ expressions or as the bound value in a _let-binding_ or module _function-defn_.
 
-> _function-literal_ ::= `fn` `(` ( _function-arg_ ( `,` _function-arg_ )* )? `)` ***right-arrow*** _expression_ | `(` _function-literal_ `)`
+> _function-literal_ ::= `fn` `(` ( _function-arg_ ( `,` _function-arg_ )* )? `)` ***right-arrow*** _value-expression_ | `(` _function-literal_ `)`
 >
 > _function-arg_ ::= ***symbol*** _type-assertion_
 
-The identifiers introduced by _function-arg_ clauses have function scope which comprises the final defining expression. These are bound to parameter values in a function call expression (see _Expressions_ below). The final expression may be of any non-function type, but may involve identifiers bound only to: other functions, _parameter-constant_ expressions, or the function arguments. In particular, the expression may not contain identifiers bound to an external _bindable_ in an interface.
+The identifiers introduced by _function-arg_ clauses have function scope which comprises the final defining expression. These are bound to parameter values in a function call expression (see [Value expressions](#value-expressions) below). The final expression may be of any non-function type, but may involve identifiers bound only to: other functions, _parameter-constant_ expressions, or the function arguments. In particular, the expression may not contain identifiers bound to an external _bindable_ in an interface.
 
 
-## Expressions
-<a id="expressions"/>
+## Value Expressions
+<a id="value-expressions"/>
 
-The expression syntax below is ambiguous in that, for example, a function application or qualified identifier may be parsed as a _boolean-expr_, _algebraic-expr_, or _record-expr_. Each possible parse should be semantically equivalent.
+The expression syntax below is ambiguous in that, for example, a function application or qualified identifier may be parsed as a _boolean-expr_, _algebraic-expr_, or _record-expr_. Each possible parse should be semantically equivalent, so that, for example, a qualified identifier `a.b` where `a` is a record, refers to the bound field `b` in `a` regardless of whether `a.b` was parsed as a _record-expr_ or an _algebraic-expr_.
 
-> _expression_ ::= ( _value-binding_ | _conditional-expr_ | _boolean-expr_ | _algebraic-expr_ | _record-expr_ ) _type-assertion_? | `(` _expression_ `)`
+> _value-expression_ ::= ( _value-binding_ | _conditional-expr_ | _boolean-expr_ | _algebraic-expr_ | _record-expr_ ) _type-assertion_? | `(` _value-expression_ `)`
 
 An expression with type assertion of the form `expr: T` is valid if the type of `expr` is `T` or a supertype of `T`, and ill-formed otherwise. The type of `expr: T`, if well-formed, is always the type `T`.
 
-Each identifier or qualified identifier in an expression must be bound (in the context determined by its occurrence). In expression context, the identifier or qualified identifier may be bound to a function argument, to another expression via a value binding in an outer expression, to a record field, to a module constant or function definition, to a module parameter, or to an external quantity via an interface binding.
+Each identifier or qualified identifier in an expression must be bound (in the context determined by its occurrence). In expression context, the identifier or qualified identifier may be bound to a function argument, to another expression via a value binding in an [outer expression](#outer-expression), to a record field, to a module constant or function definition, to a module parameter, or to an external quantity via an interface binding.
 
 An expression is a _constant_ expression if every identifier in the expression is bound to a module constant or another constant expression, and if every function application subexpression has a value that is a constant expression. Similarly, an expression is _parameter-constant_ if every identifier is bound to a module constant or parameter, or another parameter-constant expression, and if every function application has a value that is parameter-constant.
 
@@ -814,15 +815,15 @@ An expression is a _constant_ expression if every identifier in the expression i
 
 > _value-binding_ ::= _let-binding_ | _with-binding_
 >
-> _let-binding_ ::= `let` ***symbol*** ( _type-assertion_? `=` _expression_ | `=` _function-literal_ ) `;` _expression_
+> _let-binding_ ::= `let` ***symbol*** ( _type-assertion_? `=` _value-expression_ | `=` _function-literal_ ) `;` _value-expression_
 >
-> _with-binding_ ::= `with` _expression_ `;` _expression_
+> _with-binding_ ::= `with` _value-expression_ `;` _value-expression_
 
 Both `let` and `with` introduce new identifiers in expression context that can mask bindings from outer scopes.
 
 The value of the let expression `let id = expr₁; expr₂` is `expr₂` with `id` bound to `expr₁`.
 
-The value of the where expression `where expr₁; expr₂` is `expr₂` with the bindings `fᵢ = vᵢ` for each field `fᵢ` with value `vᵢ` in the record value of `expr₁`. If `expr₁` does not have record type, the expression is ill-formed.
+The value of the where expression `with expr₁; expr₂` is `expr₂` with the bindings `fᵢ = vᵢ` for each field `fᵢ` with value `vᵢ` in the record value of `expr₁`. If `expr₁` does not have record type, the expression is ill-formed.
 
 Example:
 
@@ -832,6 +833,11 @@ with a.pos;   # binds `x` to 3 m and `y` to 4 m below.
 a.scale*(x+y);
 ```
 
+<a id="outer-expression"/>
+In a value binding `let id = expr₁; expr₂` or `with expr₁; expr₂`,  `expr₂` is called the _terminal expression_, and the value binding is an _outer expression_ of `expr₂` or any of its sub-expressions.
+
+The value of the where expression `with expr₁; expr₂` is `expr₂` with the bindings `fᵢ = vᵢ` for each field `fᵢ` with value `vᵢ` in the record value of `expr₁`. If `expr₁` does not have record type, the expression is ill-formed.
+
 As the type of a value binding is the type of its final expression, syntactic ambiguity in type assertion parsing has no semantic consequence: `let id = expr₁; expr₂: T` has the type of `expr₂: T`, which is `T` iff the type of `expr₂` is `T` or a supertype of `T` ; similarly, `(let id = expr₁; expr₂): T` has type `T` iff the type of `let id = expr₁; expr₂`, which is the type of `expr₂` is `T` or a supertype of `T`.
 
 
@@ -840,15 +846,15 @@ As the type of a value binding is the type of its final expression, syntactic am
 
 > _conditional-expr_ ::= _if-expr_ | _case-expr_
 >
-> _if-expr_ ::= `if` _boolean-expr_ `then` _expression_ `else` _expression_
+> _if-expr_ ::= `if` _boolean-expr_ `then` _value-expression_ `else` _value-expression_
 >
-> _case-expr_ ::= `|` _boolean-expr_ ***right-arrow*** _expression_ )? _case-expr_ | `|` ( `otherwise` | `true` ) ***right-arrow*** _expression_
+> _case-expr_ ::= `|` _boolean-expr_ ***right-arrow*** _value-expression_ _case-expr_ | `|` ( `otherwise` | `true` ) ***right-arrow*** _value-expression_
 
 Alternatives based on one or more conditions can be expressed with if/then/else clauses or case expressions introduced with the bar symbol. In either, the conditional expression is ill-formed if any of the _boolean-expr_ have type which is not boolean.
 
 The value of `if condition then expr₁ else expr₂` is the value of `expr₁` in the case where `condition` is true, and `expr₂` otherwise. The type of the _if-expr_ is the type of `expr₁` and `expr₂`; the expression is ill-formed if the types of `expr₁` and `expr₂` differ.
 
-The value of `| otherwise → expr` is just the value of `expr`. `true` can be used in place of `otherwise` equivalently. For a compound _case-expr_ of the form `| condition → expr₁ case₂`, the value is `expr₁` in the case where `condition` is true, and the value of `case₂` otherwise; the expression is ill-formed if the types of `expr₁` and `case₂` differ.
+The value of `| otherwise → expr` is just the value of `expr`. `true` can be used in place of `otherwise` equivalently. For a compound _case-expr_ of the form `| condition → expr₁ case₂`, the value is `expr₁` in the case where `condition` is true, and the value of `case₂` otherwise; the expression is ill-formed if the types of `expr₁` and `case₂` differ. Note that that the last clause in a _case-expr_ _must_ be of the form `| otherwise → expr` or `| true → expr`.
 
 Example:
 
@@ -880,7 +886,7 @@ As with value bindings, there is no semantic ambiguity arising from an ambiguous
 >
 > _comparison-op_ ::= ***compare-equal*** | ***compare-not-equal*** | ***compare-less*** | ***compare-less-equal*** | ***compare-greater*** | ***compare-greater-equal***
 >
-> _comparison-base_ ::= _algebraic-expr_ | `(` _expression_ `)`
+> _comparison-base_ ::= _algebraic-expr_ | `(` _value-expression_ `)`
 
 A compound boolean expression of the form `expr₁ or expr₂` is well defined only if the types of `expr₁` and `expr₂` are both boolean. The value is false if both `expr₁` and `expr₂` have value false, and true otherwise. The `or` operation can be considered to be left associative, but the `or` operation is both commutative and associative.
 
@@ -904,9 +910,9 @@ A _boolean-expr_ may not involve any boolean or comparison operations, and be eq
 >
 > _algebraic-term_ ::= _algebraic-factor_ ( ( ***multiplication-dot*** | ***asterisk*** | ***division-slash*** ) _algebraic-factor_ )*
 >
-> _algebraic-factor_ ::= _quantity-literal_ | ( ***minus-sign*** | ***square-root*** )* _algebraic-base_ _algebraic-exponent_? )
+> _algebraic-factor_ ::= _quantity-literal_ | ( ***minus-sign*** | ***square-root*** )* _algebraic-base_ _algebraic-exponent_?
 >
-> _algebraic-base_ ::= _function-application_ | _qualified-identifier_ | _record-field-expr_ | ***numeric-literal*** | `(` _expression_ `)`
+> _algebraic-base_ ::= _function-application_ | _qualified-identifier_ | _record-field-expr_ | ***numeric-literal*** | `(` _value-expression_ `)`
 >
 > _algebraic-exponent_ ::= ***superscript-literal*** | ( `^` _algebraic-factor_ )+
 
@@ -924,9 +930,9 @@ The square root is introduced by ***square-root*** , and an expression `√x` is
 
 The value of an additive, multiplicative or power expression follows the usual calculi of physical quantities (for one of a number of formal treatmes, see for example, P Szekeres, _The mathematical foundations of dimensional analysis and the question of fundamental units_, International Journal of Theoretical Physics 17 no. 12 (1978), doi:10.1007/BF00678423, pp. 957–974).
 
-> _function-application_ ::= ( _qualified-identifier_ | `(` _function-literal_ `)` ) `(` ( _expression_ ( `,` _expression_ )* )? `)`
+> _function-application_ ::= ( _qualified-identifier_ | `(` _function-literal_ `)` ) `(` ( _value-expression_ ( `,` _value-expression_ )* )? `)`
 
-A _function-application_ expression is well-formed iff the function type of the _function-literal_ or the function value bound to _qualified-identifier_ is compatible with the number and types of the _expression_ clauses constituting the arguments. If the function value corresponds to the form `fn (a₁: T₁, …) → result`, then the value of the function application expression with arguments `expr₁`, … is the value of the expression `let a₁: T₁ = expr₁; … result`.
+A _function-application_ expression is well-formed iff the function type of the _function-literal_ or the function value bound to _qualified-identifier_ is compatible with the number and types of the _value-expression_ clauses constituting the arguments. If the function value corresponds to the form `fn (a₁: T₁, …) → result`, then the value of the function application expression with arguments `expr₁`, … is the value of the expression `let a₁: T₁ = expr₁; … result`.
 
 
 ### Record expressions
@@ -934,7 +940,7 @@ A _function-application_ expression is well-formed iff the function type of the 
 
 > _record-expr_ ::= _record-term_ ( ***preferential-union*** _record-term_ )*
 >
-> _record-term_ ::= _record-literal_ | _function-application_ | _qualified_identifier_ | _record-literal_ | `(` _record-expr_ `)`
+> _record-term_ ::= _record-literal_ | _function-application_ | _qualified_identifier_ | `(` _record-expr_ `)`
 >
 > _record-field-expr_ ::= ( _record-literal_ | _function-application_ | `(` _record-expr_ `)` ) `.` _qualified-identifier_
 
@@ -1022,9 +1028,9 @@ Modules are used to collect parameters, constants, and function definitions; int
 >
 > _type-alias_ ::= `type` ***symbol*** `=` _type-expr_ `;`
 >
-> _parameter-defn_ ::= `parameter` ***symbol*** _type-assertion_? `=` _expression_ `;`
+> _parameter-defn_ ::= `parameter` ***symbol*** _type-assertion_? `=` _value-expression_ `;`
 >
-> _constant-defn_ ::= `def` ***symbol*** _type-assertion_? `=` _expression_ `;`
+> _constant-defn_ ::= `def` ***symbol*** _type-assertion_? `=` _value-expression_ `;`
 >
 > _function-defn_ ::= `def` ***symbol*** `=` _function-literal_ `;`
 
@@ -1036,17 +1042,17 @@ Identifiers bound in module scope in one module can be used in another module or
 Examples:
 ```
 module A {
-    constant real pi = 3;
+    def real pi = 3;
 }
 
 module X {
     import module A;
-    constant real pi = A.pi; # Also 3.
+    def real pi = A.pi; # Also 3.
 }
 
 module Y {
     import module A as B;
-    constant real pi = B.pi; # Also 3.
+    def real pi = B.pi; # Also 3.
 }
 ```
 
@@ -1076,7 +1082,7 @@ A type alias binds a non-function type to an identifier in module scope, in type
 
 Example:
 ```
-type foo = metre;
+type foo = length;
 type bar = { a: time; b: foo };
 
 # type aliases used to assert type in constant definitions:
@@ -1091,7 +1097,7 @@ def s': bar' = { a' = 1.2; b' = 3.4 m/s; };
 
 #### Parameters
 
-A parameter definition introduces a new identifier in module scope, in expression contexts, together with a default value given by a _paramater-constant_ expression — that is, the expression can depend only upon constants and other parameters (see [Expressions](#expressions)).
+A parameter definition introduces a new identifier in module scope, in expression contexts, together with a default value given by a _parameter-constant_ expression — that is, the expression can depend only upon constants and other parameters (see [Value expressions](#value-expressions)).
 
 Parameters that are exported in an interface can be bound to a user supplied value externally; they are otherwise constant. In any expression in the same module scope that uses that parameter, the value of the parameter will be the user supplied value. This applies to expressions that are bound to other parameters — for example, consider the following module and interface definition.
 
@@ -1147,23 +1153,23 @@ def b: real = 2*sq(P);
 >
 > _bindable_ ::= `state` | `membrane` `potential` | `temperature` | (`current` `density` | `molar` `flux`) _species-name_ | (`internal` | `external`) `concentration` _species-name_ | `charge` _species-name_
 >
-> _initial-defn_ ::= `initial` ( `regime` `=` _qualified-identifier_ `;` )? ( _initial-post-expr_ `from` )? `state` _type-assertion_? `=` _expression_ `;`
+> _initial-defn_ ::= `initial` ( `regime` _qualified-identifier_ )? ( _initial-post-expr_ `from` )? `state` _type-assertion_? `=` _value-expression_ `;`
 >
-> _initial-post-expr_ ::= `steady` | `evolve` `for` _expression_
+> _initial-post-expr_ ::= `steady` | `evolve` `for` _value-expression_
 >
 > _regime-defn_ ::= `regime` _identifier_ `{` ( _regime-decl_ | _regime-defn_ )* `}`
 >
 > _regime-decl_ ::= _evolve-defn_ | _when-defn_ | _effect-defn_
 >
-> _evolve-defn_ ::= `evolve` `explicit`? `state'` _type-assertion_? `=` _expression_ `;`
+> _evolve-defn_ ::= `evolve` `explicit`? `state'` _type-assertion_? `=` _value-expression_ `;`
 >
-> _when-defn_ ::= `when` _when-condition_ ( `regime` = _qualified-identifier_ `;` )? `state` `=` _expression_ `;`
+> _when-defn_ ::= `when` _boolean-expr_ ( `regime` _qualified-identifier_ )? `state` `=` _value-expression_ `;`
 >
-> _when-condition_ ::= _boolean-expr_ | _identifier_ _type-assertion_ = _external-event_ `;`
+> _on-defn_ ::= `on` _identifier_ _type-assertion_? = _external-event_ `;` (`when` _boolean-expr_)? ( `regime` _qualified-identifier_ )? `state` `=` _value-expression_ `;`
 >
 > _external-event_ ::= `event` | `post`
 >
-> _effect-defn_ ::= `effect` _effect_ = _expression_ `;`
+> _effect-defn_ ::= `effect` _effect_ = _value-expression_ `;`
 >
 > _effect_ ::= `current` `density` _species-name_? | `molar` `flux`_species-name_ | `current` _species-name_? | `molar` `flow` `rate` _species-name_ | (`internal` | `external`) `concentration` `rate` _species-name_
 >
@@ -1177,6 +1183,21 @@ Definitions and bindings in interface definitions, much like in modules, have mo
 
 In the module context of an interface, the identifier `state` is already bound in an expression context to the _bindable_ `state`, and is bound to the type of the _bindable_ `state` in a type context. `state'` is the implicitly defined type alias for the derivative type of `state`. This does not preclude other bindings to the _bindable_ `state`.
 
+#### Parameter exports
+
+Only parameters that are exported are visible and modifiable in cellular models. The _export-parameter-defn_ is a convenience form for defining an exporting a parameter in a single statement.
+```
+interface "foo" {
+    parameter bar = 3 m;
+    export bar;
+
+    # Equivalently:
+    export parameter bar = 3 m;
+}
+```
+
+An _export-qualifier_ provides additional metadata regarding a parameter. In the initial vesion of Arblang, there is only one possible qualifier, `density`, which is applicable only for density mechanisms. The `density` qualifier indicates that mechanism effects have, or can be regarded to have, a linear dependence upon the parameter, and that consequently spatially varying values of the parameter in the model can be safely approximated by linear interpolation or averaging.
+
 #### Initial definition
 
 The value bound to `state` in an _initial-defn_ must be of a record or quantity type. This value defines or is used to compute the initial value of the initial value problem defined by interface `evolve` and `when` definitions. The type of this value determines the type of the bindable state and the state derivative expression used in an _evolve-defn_.
@@ -1185,7 +1206,7 @@ The initial regime is determined by the _regime_ clause; if none is given, the i
 
 If there is an _initial-post-expr_ `steady`, the initial state value is derived from the provided state value _s_ as a steady-state solution to the initial value problem with value _s_ at time zero and any bound interface values held constant. 
 
-If there is an _initial-post-expr_ `evolve for t` for some expression _t_, the initial state value is derived from the provided state value _s_ as the solution at time _t_ of the initial value problem with value _s_ at time zero and any bound interface values held constant. The expression _t_ must be parameter-constant.
+If there is an _initial-post-expr_ `evolve for t` for some expression _t_, the initial state value is derived from the provided state value _s_ as the solution at time _t_ of the initial value problem with value _s_ at time zero and any bound interface values held constant. The expression _t_ must be parameter-constant, and be of quantity type `time`.
 
 If the interface has no _initial-defn_ at all, the initial state is defined to be the empty record `{}`.
 
@@ -1193,7 +1214,7 @@ If the interface has no _initial-defn_ at all, the initial state is defined to b
 
 A regime defines the dynamical evolution of the mechanism state, and the effects of the mechanism state on the cellular state. There is always a top-level, unnamed regime, but more regimes can be introduced with a _regime-defn_. Associated with each regime is an evolution definition and a set of conditions that determine behaviour upon an external event or the satisfaction of some predicate.
 
-A regime definition introduces a new regime scope: inner regimes may be given names that mask outer regime names, and regime transitions in `when` clauses can refer to regimes defined in outer scopes without further qualification. A transition can also refer to a regime in the interface by using a qualified identifier:
+A regime definition introduces a new regime scope: inner regimes may be given names that mask outer regime names, and regime transitions in `when` and `on` clauses can refer to regimes defined in outer scopes without further qualification. A transition can also refer to a regime in the interface by using a qualified identifier:
 
 ```
 regime A {
@@ -1204,45 +1225,55 @@ regime A {
 
     regime D {
         # regime B is defined in outer scope.
-        when p(state) regime = B.C; state = f(state);
+        when p(state) regime B.C state = f(state);
     }
 }
 
 regime E {
     # regime A is defined in outer scope.
-    when q(state) regime = A.D; state = g(state);
+    when q(state) regime A.D state = g(state);
 }
 ```
 
 If an evolution is not specified in a regime, the evolution will be that of the outer regime. Similarly, any effects defined in an outer regime will apply, if the same effect is not defined within the inner regime. The topmost unnamed regime will implicitly define an evolution if none is provided: this implicit evolution will hold the state constant over time.
 
-Any `when` conditions defined in an outer regime, including the topmost unnamed regime, still apply in inner regimes.
+Any `when` conditions or `on` conditions defined in an outer regime, including the topmost unnamed regime, are inherited by inner regimes, are tested before any additional conditions defined in the inner regime are considered.
 
-#### When semantics
+#### When and on semantics
 
-When clauses are triggered when the mechanism state satisfies the corresponding predicate, or when an event of the appropriate type is delivered to the mechanism. The state is updated according to the `state = ` clause, and if a `regime` clause is present, the dynamics are shifted to the given regime.
+When clauses are triggered when the mechanism state satisfies the corresponding predicate, and an on-clause is triggered when an event of the appropriate type is delivered to the mechanism. The state is updated according to the `state = ` clause, and if a `regime` clause is present, the dynamics are shifted to the given regime.
 
-A given when clause associated with a regime _R_, with predicate _p_ applies at the point in time _t₁_ if the dynamics are in regime _R_ at _t₁_, _p_(_t₁_) is true and either _p_(_t_) is false or dynamics were in a regime _R'_ without this when clause for _t_ ∈ (_t₁_-δ, _t₁_) for some δ>0. All predicates are considered false for _t_ &lt; 0.
+Associated when- and on-clauses are considered first by scope — conditions defined in outer regimes take priority over conditions defined in an inner regime — and then by order of definition. If more than one when- or on-clause applies, they are applied in order of definition. Note that the effect of a clause may cause a transition to a regime where the set of applicable clauses differs, whence the new set is considered in its stead.
 
-If more than one when clause applies, they are applied in order of definition. Note that the effect of a when clause may cause a transition to a regime where the set of applicable when-clauses differs, whence the new set is considered in its stead. In any instance, no single when clause may be triggered more than once by the same event or, for predicate-based when clauses, at the same time.
+A given when clause associated with a regime _R_, with predicate _p_ applies at the point in time _t₁_ if the dynamics are in regime _R_ at _t₁_, _p_(_t₁_) is true and either _p_(_t_) is false or dynamics were in a different regime _R'_ not associated with the when clause for _t_ ∈ (_t₁_-δ, _t₁_) for some δ>0. All predicates are considered false for _t_ &lt; 0. In addition, an applicable when clause can be satisfied at most once for any point in time _t₁_.
 
-Consider the following situation:
+If events _e₁_, _e₂_, …, _eₙ_ are delivered at time _t_, applicable on-clauses are considered in turn for _e₁_, performing any state mutations or regime transistions as required (which may change in turn the set of applicable on-clauses), then for _e₂_, and so on. Each event can trigger at most one on-clause. No when-clauses are considered at time _t_ until all events delivered at _t_ are considered.
+
+Consider the following situation, with the first event delivered at time _t_ with weight _w_.
+
 ```
 initial regime X state = 0;
 
 regime X {
-    when ev = event; state = 1;    # (A)
-    when ev = event; regime = Y; state = 2; # (B)
-    when ev = event; state = 3;    # (C)
-    when state == 4 regime = Y; state = 5; # (D)
+    on weight = event; when weight>2 state = 1;    # (A)
+    on weight = event; regime = Y; state = 2;      # (B)
+    on weight = event; state = 3;                  # (C)
+    when state == 4 regime = Y; state = 5;         # (D)
 }
 
 regime Y {
-    when true regime = X; state = 4; # (E)
+    when true regime = X; state = 4;               # (E)
 }
 ```
 
-On the first event, when clauses (A) and (B) will be triggered, transitioning to regime Y with state equal to 2. At this point, the event has been handled. However the clause (E) becomes applicable as soon as the evolution is considered, and state is set to 4, and regime transitions back to X. Clause (D) now applies, setting state to 5, and transitioning back to regime Y. However clause (E) has already been triggered at this time, and so cannot be applied again.
+If _w_>2, clause (A) will match, and the state will be set to 1. The event is now processed, and no further on-clauses will be considered. However if _w_≤2, the following tests and actions will take place:
+
+1. Clause (A) will be considered and rejected, as _w_>2 is false.
+2. Clause (B) will be considered and matched, setting the state to 2 and transitioning to regime Y.
+3. The when-clause (E) now becomes applicable, and is satisfied, setting the state to 4 and transitioning to regime X.
+4. The event has already been processed, so none of the on-clauses (A), (B), or (C) will apply.
+5. The when-clause (D) is now satisfied, and the state is set to 5, and there is a transition back to regime Y.
+6. The when-clause (E) has already been triggered at time _t_, and so is no longer satisfiable, leaving us in regime Y.
 
 #### Evolution
 
@@ -1329,14 +1360,13 @@ As noted in [Mechanisms](#mechanisms), not all effects and bindings are availabl
 
 Within an interface block, there are specific points within the permitted syntax where keywords are used to refer to interface-specific values or concepts, and which constitute natural places for future extensions of the interface block to support new functionality:
 
-1. Right hand side of `bind`, corresponding to interface-specific exposed values, such as the mechanism state, ion concentrations, membrane voltage, etc.
-2. Right hand side of local binding in a `when` clause, tying event or post-event data to an identifier.
-3. Left hand side of `effect`, corresponding to contributions of the interface to the simulation state.
-4. Left hand side of `initial`, where the optional `... from` clause modifies the initial state, and also where `state` forms the left hand side of the final binding.
-5. Left hand side of `evolve`, where the keyword `explicit` might be replaced with other possible descriptions, such as `implicit` for implicit ODE or DAE systems, and also where `state'` forms left hand side of the final binding.
-6. Left hand side of `export`, where we have `density parameter` or `parameter`, but which could be extended to support for example the exposure of derived values to probe requests or similar.
+1. The set of possible _interface-classes_.
+2. The set of possible _bindables_ in an _external-binding_.
+3. The set of possible _effects_ in an _effect-defn_.
+4. The possible _initial-post-exprs_ in an _initial-defn_.
+5. New evolution definitions, replacing `explicit state' = expr;` in _evolve-defn_ with other descriptions, e.g. `implicit ...` for an implicit ODE or DAE system, or a representation of a system of stochastic differential equations.
+6. The set of possible _export-qualifiers_ in an _export_ or _export-parameter-defn_.
 
-In addition, the set of possible interface classes can be extended. An example would be to add stateful gap junctions.
 
 ## Default modules
 
@@ -1362,49 +1392,13 @@ module foo {
 }
 ```
 
-## Alternative concentration model
-
-The concentration models described in [Mechanism semantics](#mechanism-semantics) are defined in terms of flow contributions, rather than in absolute concentrations, which is a departure from the NEURON NMODL approach.
-
-The NEURON approach has some limitations: initial concentration must be supplied by the mechanism model, not the cell description; and all contributions to concentration evolution must be combined within the one mechanism, because different concentration writing mechanisms cannot overlap. Nonetheless, the flow based description
-
-```
-interface concentration "CaDynamics" {
-    export parameter gamma: real = 0.5;
-    export parameter decay: time = 80 ms;
-    export parameter detph: length = 0.1 µm;
-    export parameter steady_conc: concentration = 1.0e-4 mmol/L;
-
-    bind ca_flux = molar flux "ca";
-    bind ca_conc = internal concentration "ca";
-    effect internal concentration rate "ca" = -ca_flux*gamma/depth - (ca_conc-steady_conc)/decay;
-}
-```
-
-might be represented in a direct concentration model as
-
-```
-    export parameter gamma: real = 0.5;
-    export parameter decay: time = 80 ms;
-    export parameter detph: length = 0.1 µm;
-    export parameter steady_conc: concentration = 1.0e-4 mmol/L;
-
-    initial state = steady_conc;
-
-    bind ca_conc = state;
-    bind ca_flux = molar flux "ca";
-    evolve state' = -ca_flux*gamma/depth - (ca_conc-steady_conc)/decay;
-
-    effect internal concentration "ca" = ca_conc;
-```
-
 ## Alternative function and type alias syntax
 
 Alternatives for function definition:
 
-> _function-defn_ ::= `function` ***symbol*** _argument-list_ _type-assertion_? = _expression_ `;`
+> _function-defn_ ::= `function` ***symbol*** _argument-list_ _type-assertion_? = _value-expression_ `;`
 >
-> _function-defn_ ::= `function` ***symbol*** _argument-list_ _type-assertion_? { _expression_ }
+> _function-defn_ ::= `function` ***symbol*** _argument-list_ _type-assertion_? { _value-expression_ }
 
 Alternative for type aliases for record types:
 
