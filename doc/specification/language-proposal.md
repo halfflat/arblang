@@ -823,7 +823,7 @@ Both `let` and `with` introduce new identifiers in expression context that can m
 
 The value of the let expression `let id = expr₁; expr₂` is `expr₂` with `id` bound to `expr₁`.
 
-The value of the where expression `with expr₁; expr₂` is `expr₂` with the bindings `fᵢ = vᵢ` for each field `fᵢ` with value `vᵢ` in the record value of `expr₁`. If `expr₁` does not have record type, the expression is ill-formed.
+The value of the with expression `with expr₁; expr₂` is `expr₂` with the bindings `fᵢ = vᵢ` for each field `fᵢ` with value `vᵢ` in the record value of `expr₁`. If `expr₁` does not have record type, the expression is ill-formed.
 
 Example:
 
@@ -835,8 +835,6 @@ a.scale*(x+y);
 
 <a id="outer-expression"/>
 In a value binding `let id = expr₁; expr₂` or `with expr₁; expr₂`,  `expr₂` is called the _terminal expression_, and the value binding is an _outer expression_ of `expr₂` or any of its sub-expressions.
-
-The value of the where expression `with expr₁; expr₂` is `expr₂` with the bindings `fᵢ = vᵢ` for each field `fᵢ` with value `vᵢ` in the record value of `expr₁`. If `expr₁` does not have record type, the expression is ill-formed.
 
 As the type of a value binding is the type of its final expression, syntactic ambiguity in type assertion parsing has no semantic consequence: `let id = expr₁; expr₂: T` has the type of `expr₂: T`, which is `T` iff the type of `expr₂` is `T` or a supertype of `T` ; similarly, `(let id = expr₁; expr₂): T` has type `T` iff the type of `let id = expr₁; expr₂`, which is the type of `expr₂` is `T` or a supertype of `T`.
 
@@ -854,7 +852,7 @@ Alternatives based on one or more conditions can be expressed with if/then/else 
 
 The value of `if condition then expr₁ else expr₂` is the value of `expr₁` in the case where `condition` is true, and `expr₂` otherwise. The type of the _if-expr_ is the type of `expr₁` and `expr₂`; the expression is ill-formed if the types of `expr₁` and `expr₂` differ.
 
-The value of `| otherwise → expr` is just the value of `expr`. `true` can be used in place of `otherwise` equivalently. For a compound _case-expr_ of the form `| condition → expr₁ case₂`, the value is `expr₁` in the case where `condition` is true, and the value of `case₂` otherwise; the expression is ill-formed if the types of `expr₁` and `case₂` differ. Note that that the last clause in a _case-expr_ _must_ be of the form `| otherwise → expr` or `| true → expr`.
+The value of `| otherwise → expr` is just the value of `expr`. `true` can be used in place of `otherwise` equivalently. For a compound _case-expr_ of the form `| condition → expr₁ case₂`, the value is `expr₁` in the case where `condition` is true, and the value of `case₂` otherwise; the expression is ill-formed if the types of `expr₁` and `case₂` differ. Note that the last clause in a _case-expr_ _must_ be of the form `| otherwise → expr` or `| true → expr`.
 
 Example:
 
@@ -1241,9 +1239,9 @@ Any `when` conditions or `on` conditions defined in an outer regime, including t
 
 #### When and on semantics
 
-When clauses are triggered when the mechanism state satisfies the corresponding predicate, and an on-clause is triggered when an event of the appropriate type is delivered to the mechanism. The state is updated according to the `state = ` clause, and if a `regime` clause is present, the dynamics are shifted to the given regime.
+When clauses are triggered when the correspnding predicate is satisfied, and an on-clause is triggered when an event of the appropriate type is delivered to the mechanism. The state is updated according to the `state = ` clause, and if a `regime` clause is present, the dynamics are shifted to the given regime.
 
-Associated when- and on-clauses are considered first by scope — conditions defined in outer regimes take priority over conditions defined in an inner regime — and then by order of definition. If more than one when- or on-clause applies, they are applied in order of definition. Note that the effect of a clause may cause a transition to a regime where the set of applicable clauses differs, whence the new set is considered in its stead.
+Associated when- and on-clauses are considered first by scope — conditions defined in outer regimes take priority over conditions defined in an inner regime — and then by order of definition. If more than one when- or on-clause applies, they are tested and applied in this order. Note that the effect of a clause may cause a transition to a regime where the set of applicable clauses differs, whence the new set is considered in its stead.
 
 A given when clause associated with a regime _R_, with predicate _p_ applies at the point in time _t₁_ if the dynamics are in regime _R_ at _t₁_, _p_(_t₁_) is true and either _p_(_t_) is false or dynamics were in a different regime _R'_ not associated with the when clause for _t_ ∈ (_t₁_-δ, _t₁_) for some δ>0. All predicates are considered false for _t_ &lt; 0. In addition, an applicable when clause can be satisfied at most once for any point in time _t₁_.
 
@@ -1255,14 +1253,14 @@ Consider the following situation, with the first event delivered at time _t_ wit
 initial regime X state = 0;
 
 regime X {
-    on weight = event; when weight>2 state = 1;    # (A)
-    on weight = event; regime = Y; state = 2;      # (B)
-    on weight = event; state = 3;                  # (C)
-    when state == 4 regime = Y; state = 5;         # (D)
+    on weight = event; when weight>2 state = 1;  # (A)
+    on weight = event; regime Y state = 2;       # (B)
+    on weight = event; state = 3;                # (C)
+    when state == 4 regime Y state = 5;          # (D)
 }
 
 regime Y {
-    when true regime = X; state = 4;               # (E)
+    when true regime X state = 4;                # (E)
 }
 ```
 
