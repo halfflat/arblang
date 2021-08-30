@@ -39,7 +39,11 @@ interface discrete "expsyn_stdp" {
     on w = event; state = {
         # With proposed clamp syntax, this could be:
         # g = (S.g + S.w_plastic + w·A) ↓ [0 S, gmax];
-        g = max(0 μS, min(S.g + S.w_plastic + w·A, gmax));
+
+        g = let g = S.g + S.w_plastic + w·A;
+            | g < 0 S   → 0 S
+            | g > gmax  → gmax
+            | otherwise → g;
 
         apre = S.apre + Apre;
         w_plastic = S.w_platic + S.apost;
