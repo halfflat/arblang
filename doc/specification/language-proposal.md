@@ -204,7 +204,7 @@ Identifiers broadly follow the conventions of Python, except:
 * Special degree-sign prefixed symbols are permitted, in order to represent temperature scales. Compatibility characters U+2109 `℉` and U+2109 `℃` will be converted to `°F` and `°C` respectively in NFKC normalization.
 * Characters that are only _compatibility_ equivalent to an acceptable _symbol_ character are not permitted. In particular, superscript numerals are not permitted within a _symbol_.
 * `∞` is permitted as a non-initial symbol character so that common variable names such as `vinf` or `minf` denoting steady state values can be written instead as e.g. `v∞` and `m∞`.
-* U+2044 FRACTION SLASH is permitted as a non-initial symbol character so that common variable names such as `mhalf` denoting the midpoint value of a state can be written instead as e.g. `m½`. Note that characters such as U+00BD `½` VULGAR FRACTION ONE HALF are represented as a sequence of a digit, followed by U+2044 FRACTION SLASH, followed by another digit after NFC or NFKC normalization.
+* U+2044 FRACTION SLASH is permitted as a non-initial symbol character so that common variable names such as `vhalf` denoting the midpoint voltage value can be written instead as e.g. `v½`. Note that characters such as U+00BD `½` VULGAR FRACTION ONE HALF are represented as a sequence of a digit, followed by U+2044 FRACTION SLASH, followed by another digit after NFC or NFKC normalization.
 
 ### Superscript literals
 <a id="superscript-literals"/>
