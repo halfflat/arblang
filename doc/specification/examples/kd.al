@@ -35,8 +35,8 @@ module Kd {
 }
 
 interface density "Kd" {
-    import Kd;
-    export density parameter Kd.gbar as gbar;
+    import Kd
+    export density parameter Kd.gbar as gbar
     export parameter ek = -77 mV;
 
     bind v = membrane potential;
@@ -47,8 +47,8 @@ interface density "Kd" {
 }
 
 interface density "Kd_nernst" {
-    import Kd;
-    export density parameter Kd.gbar as gbar;
+    import Kd
+    export density parameter Kd.gbar as gbar
 
     bind v = membrane potential;
     bind ek = nernst potential "k";
