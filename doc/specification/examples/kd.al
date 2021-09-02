@@ -61,8 +61,8 @@ interface density "Kd_nernst" {
 # Kd_nernst is equivalent to:
 #
 # interface density "Kd_nernst" {
-#     import Kd;
-#     export density parameter Kd.gbar as gbar;
+#     import Kd
+#     export density parameter Kd.gbar as gbar
 #
 #     bind v = membrane potential;
 #     bind T = temperature;
