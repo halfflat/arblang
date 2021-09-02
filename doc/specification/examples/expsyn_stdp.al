@@ -10,7 +10,7 @@ interface discrete "expsyn_stdp" {
 
     export parameter τ      = 2 ms; # synaptic time constant
     export parameter τpre  = 10 ms; # pre-synaptic plasticity contribution time constant
-    export parameter τpost = 10 ms; # pre-synaptic plasticity contribution time constant
+    export parameter τpost = 10 ms; # post-synaptic plasticity contribution time constant
 
     export parameter gmax  = 10 μS; # maximum synaptic conductance
     export parameter e = 0 mV;      # reversal potential
@@ -46,7 +46,7 @@ interface discrete "expsyn_stdp" {
             | otherwise → g;
 
         apre = S.apre + Apre;
-        w_plastic = S.w_platic + S.apost;
+        w_plastic = S.w_plastic + S.apost;
     };
 
     on δt = post; state = {
