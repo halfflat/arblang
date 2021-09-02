@@ -67,7 +67,7 @@ interface density "NaV" {
             C4 ⇄ I4  (  a³·Con, Coff/b³ );
             C5 ⇄ I5  (  a⁴·Con, Coff/b⁴ );
             O  ⇄ I6  (     Oon, Ooff    );
-        }: state'
+        }: state';
 
     bind v = membrane potential;
     bind T = temperature;
